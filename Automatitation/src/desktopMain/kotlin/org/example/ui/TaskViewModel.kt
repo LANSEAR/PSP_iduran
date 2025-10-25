@@ -1,36 +1,54 @@
 package org.example.ui
 
 import androidx.compose.runtime.mutableStateListOf
+import org.example.logic.execution.CommandFactory
+import org.example.logic.execution.ProcessRunner
+import org.example.logic.model.Task
+import org.example.logic.model.TaskActionType
+import java.util.UUID
 
 class TaskViewModel {
-    var tasks = mutableStateListOf<TaskUi>(
-        TaskUi(
-            id = java.util.UUID.randomUUID().toString(),
-            name = "TAREA 1",
-            functionType = "Función de ejemplo",
-            startTime = "08:00",
-            endTime = "10:00"
-        )
-    )
-        private set
+
     data class TaskUi(
-        val id: String,
-        val name: String,
-        val functionType: String,
-        val startTime: String,
-        val endTime: String
+        val id: String = UUID.randomUUID().toString(),
+        var name: String,
+        var actionType: TaskActionType,
+        var startTime: String,
+        var endTime: String
     )
 
-    fun addTask(name: String, functionType: String, startTime: String, endTime: String) {
+    // Lista observable que pinta la UI
+    var tasks = mutableStateListOf<TaskUi>()
+        private set
+
+    init {
+        // tarea de ejemplo de arranque
+        tasks.add(
+            TaskUi(
+                name = "Tarea 1",
+                actionType = TaskActionType.CLEAN_TEMP,
+                startTime = "08:00",
+                endTime = "10:00"
+            )
+        )
+    }
+
+    fun addTask(
+        name: String,
+        functionType: TaskActionType,
+        startTime: String,
+        endTime: String
+    ) {
         val newTask = TaskUi(
-            id = java.util.UUID.randomUUID().toString(),
             name = name,
-            functionType = functionType,
+            actionType = functionType,
             startTime = startTime,
             endTime = endTime
         )
+
         tasks.add(newTask)
     }
+
 
     fun removeTaskById(id: String) {
         tasks.removeAll { it.id == id }
@@ -38,22 +56,35 @@ class TaskViewModel {
 
     fun updateTask(
         id: String,
-        newName: String? = null,
-        newFunctionType: String? = null,
-        newStart: String? = null,
-        newEnd: String? = null
+        name: String,
+        functionType: TaskActionType,
+        startTime: String,
+        endTime: String
     ) {
-        val index = tasks.indexOfFirst { it.id == id }
-        if (index == -1) return
-
-        val oldTask = tasks[index]
-        val updatedTask = oldTask.copy(
-            name = newName ?: oldTask.name,
-            functionType = newFunctionType ?: oldTask.functionType,
-            startTime = newStart ?: oldTask.startTime,
-            endTime = newEnd ?: oldTask.endTime
-        )
-        tasks[index] = updatedTask
+        val task = tasks.find { it.id == id } ?: return
+        task.name = name
+        task.actionType = functionType
+        task.startTime = startTime
+        task.endTime = endTime
     }
 
+
+    // 👇 Esto ya ejecuta una tarea ahora mismo (para pruebas)
+    fun runTaskNow(id: String, customArg: String? = null): ProcessRunner.Result? {
+        val taskUi = tasks.find { it.id == id } ?: return null
+
+        // Creamos Task técnico a partir de TaskUi
+        val command = CommandFactory.buildCommandFor(taskUi.actionType, customArg)
+        val taskExec = Task(
+            id = taskUi.id,
+            name = taskUi.name,
+            actionType = taskUi.actionType,
+            command = command,
+            startTime = taskUi.startTime,
+            endTime = taskUi.endTime
+        )
+
+        // Ejecutamos
+        return ProcessRunner.runCommand(taskExec.command)
+    }
 }
