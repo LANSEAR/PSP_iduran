@@ -5,24 +5,38 @@ import org.example.logic.execution.CommandFactory
 import org.example.logic.execution.ProcessRunner
 import org.example.logic.model.Task
 import org.example.logic.model.TaskActionType
-import java.util.UUID
+import java.text.SimpleDateFormat
+import java.util.*
 
 class TaskViewModel {
 
+    // 🔹 Representación de una tarea
     data class TaskUi(
         val id: String = UUID.randomUUID().toString(),
         var name: String,
         var actionType: TaskActionType,
         var startTime: String,
-        var endTime: String
+        var endTime: String,
+        var isRunning: Boolean = false // indica si la tarea se está ejecutando
     )
 
-    // Lista observable que pinta la UI
+    // 🔹 Representación de un log expandible
+    data class LogEntry(
+        val message: String,
+        val details: String = "",
+        val isError: Boolean = false,
+        val timestamp: String = currentTimestamp()
+    )
+
+    // 🔹 Listas observables para Compose
     var tasks = mutableStateListOf<TaskUi>()
         private set
 
+    var logs = mutableStateListOf<LogEntry>()
+        private set
+
     init {
-        // tarea de ejemplo de arranque
+        // Tarea de ejemplo inicial
         tasks.add(
             TaskUi(
                 name = "Tarea 1",
@@ -45,10 +59,8 @@ class TaskViewModel {
             startTime = startTime,
             endTime = endTime
         )
-
         tasks.add(newTask)
     }
-
 
     fun removeTaskById(id: String) {
         tasks.removeAll { it.id == id }
@@ -68,23 +80,58 @@ class TaskViewModel {
         task.endTime = endTime
     }
 
+    // 🔹 Ejecuta una tarea y guarda logs detallados
+    fun runTaskNow(id: String, customArg: String? = null) {
+        val taskUi = tasks.find { it.id == id } ?: return
 
-    // 👇 Esto ya ejecuta una tarea ahora mismo (para pruebas)
-    fun runTaskNow(id: String, customArg: String? = null): ProcessRunner.Result? {
-        val taskUi = tasks.find { it.id == id } ?: return null
+        // Evita ejecuciones duplicadas
+        if (taskUi.isRunning) {
+            addLog("⚠️ La tarea '${taskUi.name}' ya está en ejecución.")
+            return
+        }
 
-        // Creamos Task técnico a partir de TaskUi
-        val command = CommandFactory.buildCommandFor(taskUi.actionType, customArg)
-        val taskExec = Task(
-            id = taskUi.id,
-            name = taskUi.name,
-            actionType = taskUi.actionType,
-            command = command,
-            startTime = taskUi.startTime,
-            endTime = taskUi.endTime
-        )
+        taskUi.isRunning = true
+        addLog("▶️ Ejecutando tarea: ${taskUi.name}")
 
-        // Ejecutamos
-        return ProcessRunner.runCommand(taskExec.command)
+        Thread {
+            try {
+                val command = CommandFactory.buildCommandFor(taskUi.actionType, customArg)
+                val result = ProcessRunner.runCommand(command)
+                taskUi.isRunning = false
+
+                when {
+                    result.timedOut -> addLog(
+                        "⏰ ${taskUi.name}: tiempo de ejecución superado.",
+                        result.stderr.ifBlank { result.stdout },
+                        isError = true
+                    )
+                    result.exitCode == 0 -> addLog(
+                        "✅ ${taskUi.name} completada correctamente.",
+                        result.stdout
+                    )
+                    else -> addLog(
+                        "❌ ${taskUi.name} falló (código ${result.exitCode})",
+                        result.stderr.ifBlank { result.stdout },
+                        isError = true
+                    )
+                }
+            } catch (e: Exception) {
+                taskUi.isRunning = false
+                addLog("💥 Error ejecutando ${taskUi.name}: ${e.message}", isError = true)
+            }
+        }.start()
+    }
+
+    // 🔹 Añade logs con detalles y marca temporal
+    private fun addLog(message: String, details: String = "", isError: Boolean = false) {
+        logs.add(0, LogEntry(message, details, isError))
+    }
+
+    // 🔹 Hora actual formateada para los logs
+    companion object {
+        private fun currentTimestamp(): String {
+            val sdf = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
+            return sdf.format(Date())
+        }
     }
 }

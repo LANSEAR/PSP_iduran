@@ -7,6 +7,8 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -55,10 +57,11 @@ fun MainScreen(vm: TaskViewModel = remember { TaskViewModel() }) {
     var expandedPlus by remember { mutableStateOf(false) }
     var expandedDots by remember { mutableStateOf(false) }
 
-    // Estados para diálogos
+    // Estados de diálogos
     var showCreateDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf(false) }
+    var showSelectDialog by remember { mutableStateOf(false) } // 🔹 nuevo
 
     // Estado para la tarea seleccionada
     var selectedTask by remember { mutableStateOf<TaskViewModel.TaskUi?>(null) }
@@ -77,7 +80,7 @@ fun MainScreen(vm: TaskViewModel = remember { TaskViewModel() }) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // ➕ Menú de acciones
+            // ➕ Menú principal
             Box {
                 Text(
                     "+",
@@ -109,13 +112,13 @@ fun MainScreen(vm: TaskViewModel = remember { TaskViewModel() }) {
                         text = { Text("EDITAR TAREA", color = NeutralDark) },
                         onClick = {
                             expandedPlus = false
-                            showEditDialog = true
+                            showSelectDialog = true // 🔹 ahora abre el diálogo de selección
                         }
                     )
                 }
             }
 
-            // ⋮ Menú lateral derecho
+            // ⋮ Menú lateral
             Box {
                 Text(
                     "⋮",
@@ -143,7 +146,7 @@ fun MainScreen(vm: TaskViewModel = remember { TaskViewModel() }) {
 
         Spacer(Modifier.height(8.dp))
 
-        // 🟥 Contenedor gris adaptativo con tareas
+        // 🟥 Contenedor de tareas
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -167,26 +170,40 @@ fun MainScreen(vm: TaskViewModel = remember { TaskViewModel() }) {
                             ),
                         contentAlignment = Alignment.Center
                     ) {
-                        // Texto centrado con color corporativo
-                        Text(
-                            text = task.name,
-                            color = NeutralLight,
-                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 8.dp),
-                            textAlign = TextAlign.Center,
-                            maxLines = 1,
-                            softWrap = false,
-                            overflow = TextOverflow.Ellipsis
-                        )
+                        if (task.isRunning) {
+                            CircularProgressIndicator(
+                                color = Color.White,
+                                strokeWidth = 3.dp,
+                                modifier = Modifier.size(28.dp)
+                            )
+                        } else {
+                            Text(
+                                text = task.name,
+                                color = NeutralLight,
+                                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 8.dp),
+                                textAlign = TextAlign.Center,
+                                maxLines = 1,
+                                softWrap = false,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
 
-                        // 🔧 Menú contextual corporativo
+                        // 🔧 Menú contextual
                         DropdownMenu(
                             expanded = expandedTaskMenu,
                             onDismissRequest = { expandedTaskMenu = false },
                             modifier = Modifier.background(Color.White)
                         ) {
+                            DropdownMenuItem(
+                                text = { Text("▶ Ejecutar ahora", color = CyanAccent) },
+                                onClick = {
+                                    expandedTaskMenu = false
+                                    vm.runTaskNow(task.id)
+                                }
+                            )
                             DropdownMenuItem(
                                 text = { Text("⚙️ Ajustes", color = NeutralDark) },
                                 onClick = {
@@ -217,15 +234,91 @@ fun MainScreen(vm: TaskViewModel = remember { TaskViewModel() }) {
             color = NeutralDark,
             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
         )
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .background(Color(0xFFE9E9E9))
+                .padding(12.dp)
+                .verticalScroll(rememberScrollState())
+        ) {
+            if (vm.logs.isEmpty()) {
+                Text(
+                    "No hay registros aún...",
+                    color = Color.Gray,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    vm.logs.forEach { log ->
+                        var expanded by remember { mutableStateOf(false) }
+
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { expanded = !expanded },
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (log.isError) Color(0xFFFFE6E6) else Color.White
+                            ),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(8.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        log.message,
+                                        color = if (log.isError) RedPrimary else NeutralDark,
+                                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium)
+                                    )
+
+                                    Text(
+                                        log.timestamp,
+                                        color = Color.Gray,
+                                        style = MaterialTheme.typography.labelSmall
+                                    )
+                                }
+
+                                if (expanded && log.details.isNotBlank()) {
+                                    Spacer(Modifier.height(6.dp))
+                                    Divider(color = Color(0xFFE0E0E0))
+                                    Spacer(Modifier.height(6.dp))
+                                    Text(
+                                        text = log.details.trim(),
+                                        color = NeutralDark,
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 💬 Diálogos
+        if (showCreateDialog)
+            DialogCrearTarea(vm, onDismiss = { showCreateDialog = false })
+
+        if (showDeleteDialog)
+            DialogBorrarTarea(vm, selectedTask, onDismiss = { showDeleteDialog = false })
+
+        if (showEditDialog)
+            DialogEditarTarea(vm, selectedTask, onDismiss = { showEditDialog = false })
+
+        // 🔹 Nuevo diálogo para seleccionar tarea
+        if (showSelectDialog)
+            DialogSeleccionarTarea(
+                vm = vm,
+                onDismiss = { showSelectDialog = false },
+                onTaskSelected = { task ->
+                    selectedTask = task
+                    showSelectDialog = false
+                    showEditDialog = true
+                }
+            )
     }
-
-    // 💬 Diálogos
-    if (showCreateDialog)
-        DialogCrearTarea(vm, onDismiss = { showCreateDialog = false })
-
-    if (showDeleteDialog)
-        DialogBorrarTarea(vm, selectedTask, onDismiss = { showDeleteDialog = false })
-
-    if (showEditDialog)
-        DialogEditarTarea(vm, selectedTask, onDismiss = { showEditDialog = false })
 }
