@@ -16,7 +16,6 @@ import org.example.logic.model.TaskActionType
 private val RedPrimary = Color(0xFFBA3023)
 private val CyanAccent = Color(0xFF1FC2D3)
 private val NeutralLight = Color(0xFFF5F5F5)
-private val NeutralDark = Color(0xFF1C1C1C)
 private val TextPrimary = Color(0xFF1C1C1C)
 private val LabelGray = Color(0xFF5F5F5F)
 private val SelectedBg = Color(0xFFFFEDED) // Fondo rojo claro al seleccionar
@@ -28,7 +27,7 @@ fun DialogCrearTarea(
     onDismiss: () -> Unit
 ) {
     var name by remember { mutableStateOf("") }
-    var function by remember { mutableStateOf(TaskActionType.CUSTOM_COMMAND) }
+    var function by remember { mutableStateOf(TaskActionType.CLEAN_TEMP) } // ✅ valor inicial corregido
     var start by remember { mutableStateOf("") }
     var end by remember { mutableStateOf("") }
 
@@ -109,16 +108,13 @@ fun DialogCrearTarea(
                                 },
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(if (isSelected) SelectedBg else Color.Transparent),
-                                colors = MenuDefaults.itemColors(
-                                    textColor = TextPrimary
-                                )
+                                    .background(if (isSelected) SelectedBg else Color.Transparent)
                             )
                         }
                     }
                 }
 
-                // ⏰ Horario
+                // ⏰ Horario (opcional)
                 OutlinedTextField(
                     value = start,
                     onValueChange = { start = it },

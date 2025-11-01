@@ -3,9 +3,9 @@ package org.example.logic.model
 enum class OsType { WINDOWS, LINUX, MAC, UNKNOWN }
 
 enum class TaskActionType {
-    CLEAN_TEMP,        // limpiar temporales
-    BACKUP_FOLDER,     // copiar carpeta a otra ruta
-    CUSTOM_COMMAND     // comando definido por el usuario
+    CLEAN_TEMP,
+    GENERATE_REPORT,
+    BACKUP_FOLDER,
 }
 
 data class Task(

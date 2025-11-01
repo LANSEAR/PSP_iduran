@@ -5,40 +5,36 @@ import org.example.logic.model.TaskActionType
 
 object CommandFactory {
 
-    // Devuelve la lista de strings que debe ejecutar ProcessBuilder
     fun buildCommandFor(
         action: TaskActionType,
-        customArg: String? = null // p.e. ruta origen/destino en backups
+        customArg: String? = null
     ): List<String> {
         return when (action) {
 
+            // 🧹 Limpiar temporales
             TaskActionType.CLEAN_TEMP -> when (OsDetector.current) {
-                OsType.WINDOWS ->
-                    listOf("cmd.exe", "/c", "del /q/f/s %TEMP%\\*")
-                OsType.LINUX, OsType.MAC ->
-                    listOf("bash", "-c", "rm -rf /tmp/*")
-                else ->
-                    emptyList()
+                OsType.WINDOWS -> listOf("cmd.exe", "/c", "del /q/f/s %TEMP%\\*")
+                OsType.LINUX, OsType.MAC -> listOf("bash", "-c", "rm -rf /tmp/*")
+                else -> emptyList()
             }
 
-            TaskActionType.BACKUP_FOLDER -> when (OsDetector.current) {
-                OsType.WINDOWS ->
-                    // ejemplo simple: copia recursiva de una carpeta a otra
-                    // customArg podría ser algo estilo "C:\\origen|C:\\destino"
-                    listOf("cmd.exe", "/c", "echo Backup no implementado aún en Windows")
-                OsType.LINUX, OsType.MAC ->
-                    listOf("bash", "-c", "echo Backup no implementado aún en Unix")
-                else ->
-                    emptyList()
+            // 🧾 Generar informe (interno)
+            TaskActionType.GENERATE_REPORT -> {
+                // Generación gestionada por ProcessRunner
+                listOf("internal_report", customArg ?: "informe_automatizador")
             }
 
-            TaskActionType.CUSTOM_COMMAND -> when (OsDetector.current) {
-                OsType.WINDOWS ->
-                    listOf("cmd.exe", "/c", customArg ?: "echo sin comando")
-                OsType.LINUX, OsType.MAC ->
-                    listOf("bash", "-c", customArg ?: "echo sin comando")
-                else ->
-                    emptyList()
+            // 📦 Copia de seguridad recursiva (interna)
+            TaskActionType.BACKUP_FOLDER -> {
+                val parts = customArg?.split("|")
+                val source = parts?.getOrNull(0)
+                val dest = parts?.getOrNull(1)
+
+                if (source.isNullOrBlank() || dest.isNullOrBlank()) {
+                    return emptyList()
+                }
+
+                listOf("internal_backup", source, dest)
             }
         }
     }

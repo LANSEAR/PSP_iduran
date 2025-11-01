@@ -3,6 +3,7 @@ package org.example.ui
 import androidx.compose.runtime.mutableStateListOf
 import org.example.logic.execution.CommandFactory
 import org.example.logic.execution.ProcessRunner
+import org.example.logic.execution.TaskScheduler
 import org.example.logic.model.Task
 import org.example.logic.model.TaskActionType
 import java.text.SimpleDateFormat
@@ -17,8 +18,11 @@ class TaskViewModel {
         var actionType: TaskActionType,
         var startTime: String,
         var endTime: String,
-        var isRunning: Boolean = false // indica si la tarea se está ejecutando
+        var isRunning: Boolean = false,
+        var isScheduled: Boolean = false,
+        var repeatInterval: Long = 0L // en segundos
     )
+
 
     // 🔹 Representación de un log expandible
     data class LogEntry(
@@ -120,6 +124,33 @@ class TaskViewModel {
                 addLog("💥 Error ejecutando ${taskUi.name}: ${e.message}", isError = true)
             }
         }.start()
+    }
+    fun scheduleTask(id: String, intervalSeconds: Long) {
+        val taskUi = tasks.find { it.id == id } ?: return
+        if (taskUi.isScheduled) {
+            addLog("⚠️ ${taskUi.name} ya estaba programada.")
+            return
+        }
+
+        taskUi.isScheduled = true
+        taskUi.repeatInterval = intervalSeconds
+        addLog("⏱️ ${taskUi.name} programada cada ${intervalSeconds}s.")
+
+        TaskScheduler.scheduleTask(id, intervalSeconds) {
+            runTaskNow(id)
+        }
+    }
+
+    fun stopScheduledTask(id: String) {
+        val taskUi = tasks.find { it.id == id } ?: return
+        if (!taskUi.isScheduled) {
+            addLog("ℹ️ ${taskUi.name} no estaba programada.")
+            return
+        }
+
+        TaskScheduler.cancelTask(id)
+        taskUi.isScheduled = false
+        addLog("⏹️ Programación detenida para ${taskUi.name}.")
     }
 
     // 🔹 Añade logs con detalles y marca temporal

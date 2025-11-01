@@ -20,6 +20,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
+import org.example.logic.model.TaskActionType
 
 // 🎨 Paleta corporativa
 private val RedPrimary = Color(0xFFBA3023)
@@ -61,7 +62,7 @@ fun MainScreen(vm: TaskViewModel = remember { TaskViewModel() }) {
     var showCreateDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf(false) }
-    var showSelectDialog by remember { mutableStateOf(false) } // 🔹 nuevo
+    var showSelectDialog by remember { mutableStateOf(false) }
 
     // Estado para la tarea seleccionada
     var selectedTask by remember { mutableStateOf<TaskViewModel.TaskUi?>(null) }
@@ -112,7 +113,7 @@ fun MainScreen(vm: TaskViewModel = remember { TaskViewModel() }) {
                         text = { Text("EDITAR TAREA", color = NeutralDark) },
                         onClick = {
                             expandedPlus = false
-                            showSelectDialog = true // 🔹 ahora abre el diálogo de selección
+                            showSelectDialog = true
                         }
                     )
                 }
@@ -159,36 +160,53 @@ fun MainScreen(vm: TaskViewModel = remember { TaskViewModel() }) {
             ) {
                 vm.tasks.forEach { task ->
                     var expandedTaskMenu by remember { mutableStateOf(false) }
+                    var showIntervalDialog by remember { mutableStateOf(false) }
+                    var showBackupDialog by remember { mutableStateOf(false) }
 
                     Box(
                         modifier = Modifier
-                            .size(140.dp)
-                            .background(RedPrimary)
+                            .size(150.dp)
+                            .background(if (task.isScheduled) YellowAccent else RedPrimary)
                             .combinedClickable(
                                 onClick = { expandedTaskMenu = true },
                                 onLongClick = { expandedTaskMenu = true }
                             ),
                         contentAlignment = Alignment.Center
                     ) {
-                        if (task.isRunning) {
-                            CircularProgressIndicator(
-                                color = Color.White,
-                                strokeWidth = 3.dp,
-                                modifier = Modifier.size(28.dp)
-                            )
-                        } else {
-                            Text(
-                                text = task.name,
-                                color = NeutralLight,
-                                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 8.dp),
-                                textAlign = TextAlign.Center,
-                                maxLines = 1,
-                                softWrap = false,
-                                overflow = TextOverflow.Ellipsis
-                            )
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center,
+                            modifier = Modifier.padding(4.dp)
+                        ) {
+                            if (task.isRunning) {
+                                CircularProgressIndicator(
+                                    color = Color.White,
+                                    strokeWidth = 3.dp,
+                                    modifier = Modifier.size(28.dp)
+                                )
+                            } else {
+                                Text(
+                                    text = task.name,
+                                    color = NeutralLight,
+                                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+                                    textAlign = TextAlign.Center,
+                                    maxLines = 1,
+                                    softWrap = false,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                if (task.isScheduled && task.repeatInterval > 0) {
+                                    val humanInterval = when (task.repeatInterval) {
+                                        in 1..1800 -> "Cada ${task.repeatInterval / 60} min"
+                                        in 1801..7200 -> "Cada ${(task.repeatInterval / 3600)} h"
+                                        else -> "Cada ${(task.repeatInterval / 3600)} h aprox."
+                                    }
+                                    Text(
+                                        text = "⏱️ $humanInterval",
+                                        color = Color.White.copy(alpha = 0.9f),
+                                        style = MaterialTheme.typography.labelSmall
+                                    )
+                                }
+                            }
                         }
 
                         // 🔧 Menú contextual
@@ -201,7 +219,24 @@ fun MainScreen(vm: TaskViewModel = remember { TaskViewModel() }) {
                                 text = { Text("▶ Ejecutar ahora", color = CyanAccent) },
                                 onClick = {
                                     expandedTaskMenu = false
-                                    vm.runTaskNow(task.id)
+                                    when (task.actionType) {
+                                        TaskActionType.BACKUP_FOLDER -> showBackupDialog = true
+                                        else -> vm.runTaskNow(task.id)
+                                    }
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("⏱️ Programar tarea", color = YellowAccent) },
+                                onClick = {
+                                    expandedTaskMenu = false
+                                    showIntervalDialog = true
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("🛑 Detener programación", color = RedPrimary) },
+                                onClick = {
+                                    expandedTaskMenu = false
+                                    vm.stopScheduledTask(task.id)
                                 }
                             )
                             DropdownMenuItem(
@@ -219,6 +254,24 @@ fun MainScreen(vm: TaskViewModel = remember { TaskViewModel() }) {
                                     selectedTask = task
                                     showDeleteDialog = true
                                 }
+                            )
+                        }
+
+                        // Diálogo de intervalo
+                        if (showIntervalDialog) {
+                            DialogIntervaloTarea(
+                                vm = vm,
+                                task = task,
+                                onDismiss = { showIntervalDialog = false }
+                            )
+                        }
+
+                        // Diálogo de copia de seguridad
+                        if (showBackupDialog) {
+                            DialogBackupFolder(
+                                vm = vm,
+                                task = task,
+                                onDismiss = { showBackupDialog = false }
                             )
                         }
                     }
@@ -309,7 +362,6 @@ fun MainScreen(vm: TaskViewModel = remember { TaskViewModel() }) {
         if (showEditDialog)
             DialogEditarTarea(vm, selectedTask, onDismiss = { showEditDialog = false })
 
-        // 🔹 Nuevo diálogo para seleccionar tarea
         if (showSelectDialog)
             DialogSeleccionarTarea(
                 vm = vm,
