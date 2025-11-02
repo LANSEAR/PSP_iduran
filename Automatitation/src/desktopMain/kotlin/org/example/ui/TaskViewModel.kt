@@ -3,11 +3,13 @@ package org.example.ui
 import androidx.compose.runtime.mutableStateListOf
 import org.example.logic.execution.CommandFactory
 import org.example.logic.execution.ProcessRunner
-import org.example.logic.execution.TaskScheduler
 import org.example.logic.model.Task
 import org.example.logic.model.TaskActionType
 import java.text.SimpleDateFormat
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 import java.util.*
+import kotlin.concurrent.timer
 
 class TaskViewModel {
 
@@ -23,7 +25,6 @@ class TaskViewModel {
         var repeatInterval: Long = 0L // en segundos
     )
 
-
     // 🔹 Representación de un log expandible
     data class LogEntry(
         val message: String,
@@ -38,6 +39,9 @@ class TaskViewModel {
 
     var logs = mutableStateListOf<LogEntry>()
         private set
+
+    // 🔹 Timers activos para tareas programadas
+    private val activeTimers = mutableMapOf<String, Timer>()
 
     init {
         // Tarea de ejemplo inicial
@@ -67,6 +71,7 @@ class TaskViewModel {
     }
 
     fun removeTaskById(id: String) {
+        stopScheduledTask(id) // cancelar si estaba programada
         tasks.removeAll { it.id == id }
     }
 
@@ -88,7 +93,6 @@ class TaskViewModel {
     fun runTaskNow(id: String, customArg: String? = null) {
         val taskUi = tasks.find { it.id == id } ?: return
 
-        // Evita ejecuciones duplicadas
         if (taskUi.isRunning) {
             addLog("⚠️ La tarea '${taskUi.name}' ya está en ejecución.")
             return
@@ -125,40 +129,65 @@ class TaskViewModel {
             }
         }.start()
     }
+
+    // 🔁 Programar ejecución automática dentro del horario permitido
     fun scheduleTask(id: String, intervalSeconds: Long) {
-        val taskUi = tasks.find { it.id == id } ?: return
-        if (taskUi.isScheduled) {
-            addLog("⚠️ ${taskUi.name} ya estaba programada.")
+        val task = tasks.find { it.id == id } ?: return
+        if (task.isScheduled) {
+            addLog("⚠️ ${task.name} ya estaba programada.")
             return
         }
 
-        taskUi.isScheduled = true
-        taskUi.repeatInterval = intervalSeconds
-        addLog("⏱️ ${taskUi.name} programada cada ${intervalSeconds}s.")
+        task.isScheduled = true
+        task.repeatInterval = intervalSeconds
+        addLog("⏱️ ${task.name} programada cada ${intervalSeconds / 60} minutos.")
 
-        TaskScheduler.scheduleTask(id, intervalSeconds) {
-            runTaskNow(id)
+        val formatter = DateTimeFormatter.ofPattern("HH:mm")
+
+        val timer = timer(
+            name = "TaskTimer-${task.id}",
+            initialDelay = 0L,
+            period = intervalSeconds * 1000
+        ) {
+            try {
+                val now = LocalTime.now()
+                val start = LocalTime.parse(task.startTime, formatter)
+                val end = LocalTime.parse(task.endTime, formatter)
+
+                if (now.isAfter(start) && now.isBefore(end)) {
+                    runTaskNow(task.id)
+                } else {
+                    addLog("⏸️ ${task.name} pausada (fuera del horario permitido).")
+                }
+            } catch (e: Exception) {
+                addLog("⚠️ Error en programación de ${task.name}: ${e.message}", isError = true)
+            }
         }
+
+        activeTimers[id] = timer
     }
 
+    // 🛑 Detener programación
     fun stopScheduledTask(id: String) {
-        val taskUi = tasks.find { it.id == id } ?: return
-        if (!taskUi.isScheduled) {
-            addLog("ℹ️ ${taskUi.name} no estaba programada.")
+        val task = tasks.find { it.id == id } ?: return
+        if (!task.isScheduled) {
+            addLog("ℹ️ ${task.name} no estaba programada.")
             return
         }
 
-        TaskScheduler.cancelTask(id)
-        taskUi.isScheduled = false
-        addLog("⏹️ Programación detenida para ${taskUi.name}.")
+        activeTimers[id]?.cancel()
+        activeTimers.remove(id)
+
+        task.isScheduled = false
+        addLog("⏹️ Programación detenida para ${task.name}.")
     }
 
-    // 🔹 Añade logs con detalles y marca temporal
+    // 🧾 Logs
     private fun addLog(message: String, details: String = "", isError: Boolean = false) {
         logs.add(0, LogEntry(message, details, isError))
     }
 
-    // 🔹 Hora actual formateada para los logs
+    // 🕒 Marca temporal
     companion object {
         private fun currentTimestamp(): String {
             val sdf = SimpleDateFormat("HH:mm:ss", Locale.getDefault())

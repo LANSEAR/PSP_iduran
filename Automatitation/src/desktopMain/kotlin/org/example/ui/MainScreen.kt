@@ -63,6 +63,7 @@ fun MainScreen(vm: TaskViewModel = remember { TaskViewModel() }) {
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf(false) }
     var showSelectDialog by remember { mutableStateOf(false) }
+    var showInfoDialog by remember { mutableStateOf(false) }
 
     // Estado para la tarea seleccionada
     var selectedTask by remember { mutableStateOf<TaskViewModel.TaskUi?>(null) }
@@ -132,8 +133,17 @@ fun MainScreen(vm: TaskViewModel = remember { TaskViewModel() }) {
                     onDismissRequest = { expandedDots = false },
                     modifier = Modifier.background(Color.White)
                 ) {
-                    DropdownMenuItem(text = { Text("GUÍA", color = NeutralDark) }, onClick = { expandedDots = false })
-                    DropdownMenuItem(text = { Text("INFO", color = NeutralDark) }, onClick = { expandedDots = false })
+                    DropdownMenuItem(
+                        text = { Text("GUÍA", color = NeutralDark) },
+                        onClick = { expandedDots = false }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("INFO", color = NeutralDark) },
+                        onClick = {
+                            expandedDots = false
+                            showInfoDialog = true
+                        }
+                    )
                     DropdownMenuItem(
                         text = { Text("SALIR", color = OrangeBright) },
                         onClick = {
@@ -257,23 +267,11 @@ fun MainScreen(vm: TaskViewModel = remember { TaskViewModel() }) {
                             )
                         }
 
-                        // Diálogo de intervalo
-                        if (showIntervalDialog) {
-                            DialogIntervaloTarea(
-                                vm = vm,
-                                task = task,
-                                onDismiss = { showIntervalDialog = false }
-                            )
-                        }
+                        if (showIntervalDialog)
+                            DialogIntervaloTarea(vm = vm, task = task, onDismiss = { showIntervalDialog = false })
 
-                        // Diálogo de copia de seguridad
-                        if (showBackupDialog) {
-                            DialogBackupFolder(
-                                vm = vm,
-                                task = task,
-                                onDismiss = { showBackupDialog = false }
-                            )
-                        }
+                        if (showBackupDialog)
+                            DialogBackupFolder(vm = vm, task = task, onDismiss = { showBackupDialog = false })
                     }
                 }
             }
@@ -297,11 +295,7 @@ fun MainScreen(vm: TaskViewModel = remember { TaskViewModel() }) {
                 .verticalScroll(rememberScrollState())
         ) {
             if (vm.logs.isEmpty()) {
-                Text(
-                    "No hay registros aún...",
-                    color = Color.Gray,
-                    style = MaterialTheme.typography.bodySmall
-                )
+                Text("No hay registros aún...", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     vm.logs.forEach { log ->
@@ -351,26 +345,68 @@ fun MainScreen(vm: TaskViewModel = remember { TaskViewModel() }) {
                 }
             }
         }
-
-        // 💬 Diálogos
-        if (showCreateDialog)
-            DialogCrearTarea(vm, onDismiss = { showCreateDialog = false })
-
-        if (showDeleteDialog)
-            DialogBorrarTarea(vm, selectedTask, onDismiss = { showDeleteDialog = false })
-
-        if (showEditDialog)
-            DialogEditarTarea(vm, selectedTask, onDismiss = { showEditDialog = false })
-
-        if (showSelectDialog)
-            DialogSeleccionarTarea(
-                vm = vm,
-                onDismiss = { showSelectDialog = false },
-                onTaskSelected = { task ->
-                    selectedTask = task
-                    showSelectDialog = false
-                    showEditDialog = true
-                }
-            )
     }
+
+    // 💬 Diálogos generales
+    if (showCreateDialog)
+        DialogCrearTarea(vm, onDismiss = { showCreateDialog = false })
+
+    if (showDeleteDialog)
+        DialogBorrarTarea(vm, selectedTask, onDismiss = { showDeleteDialog = false })
+
+    if (showEditDialog)
+        DialogEditarTarea(vm, selectedTask, onDismiss = { showEditDialog = false })
+
+    if (showSelectDialog)
+        DialogSeleccionarTarea(
+            vm = vm,
+            onDismiss = { showSelectDialog = false },
+            onTaskSelected = { task ->
+                selectedTask = task
+                showSelectDialog = false
+                showEditDialog = true
+            }
+        )
+
+    if (showInfoDialog)
+        DialogInfoApp(onDismiss = { showInfoDialog = false })
+}
+
+@Composable
+fun DialogInfoApp(onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cerrar", color = Color(0xFFBA3023))
+            }
+        },
+        title = {
+            Text(
+                "Acerca de Automatizador de Tareas",
+                style = MaterialTheme.typography.titleLarge.copy(
+                    color = Color(0xFFBA3023),
+                    fontWeight = FontWeight.SemiBold
+                )
+            )
+        },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(top = 4.dp)
+            ) {
+                Text("👤 Desarrollado por: Iván Durán", color = Color(0xFF1C1C1C))
+                Text("⚙️ Versión: 1.0.0", color = Color(0xFF1C1C1C))
+                Text("📅 Fecha de lanzamiento: 2 de noviembre de 2025", color = Color(0xFF1C1C1C))
+                Divider(Modifier.padding(vertical = 8.dp))
+                Text(
+                    "© 2025 Iván Durán. Todos los derechos reservados.",
+                    color = Color.Gray,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+        },
+        containerColor = Color(0xFFF5F5F5),
+        tonalElevation = 8.dp
+    )
 }
