@@ -64,6 +64,7 @@ fun MainScreen(vm: TaskViewModel = remember { TaskViewModel() }) {
     var showEditDialog by remember { mutableStateOf(false) }
     var showSelectDialog by remember { mutableStateOf(false) }
     var showInfoDialog by remember { mutableStateOf(false) }
+    var showGuideDialog by remember { mutableStateOf(false) } // 🔹 nuevo diálogo
 
     // Estado para la tarea seleccionada
     var selectedTask by remember { mutableStateOf<TaskViewModel.TaskUi?>(null) }
@@ -135,7 +136,10 @@ fun MainScreen(vm: TaskViewModel = remember { TaskViewModel() }) {
                 ) {
                     DropdownMenuItem(
                         text = { Text("GUÍA", color = NeutralDark) },
-                        onClick = { expandedDots = false }
+                        onClick = {
+                            expandedDots = false
+                            showGuideDialog = true
+                        }
                     )
                     DropdownMenuItem(
                         text = { Text("INFO", color = NeutralDark) },
@@ -370,6 +374,9 @@ fun MainScreen(vm: TaskViewModel = remember { TaskViewModel() }) {
 
     if (showInfoDialog)
         DialogInfoApp(onDismiss = { showInfoDialog = false })
+
+    if (showGuideDialog)
+        DialogGuideApp(onDismiss = { showGuideDialog = false }) // 🔹 nuevo
 }
 
 @Composable
@@ -410,3 +417,60 @@ fun DialogInfoApp(onDismiss: () -> Unit) {
         tonalElevation = 8.dp
     )
 }
+
+@Composable
+fun DialogGuideApp(onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cerrar", color = RedPrimary, fontWeight = FontWeight.SemiBold)
+            }
+        },
+        title = {
+            Text(
+                "Guía de uso",
+                style = MaterialTheme.typography.titleLarge.copy(
+                    color = RedPrimary,
+                    fontWeight = FontWeight.SemiBold
+                )
+            )
+        },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(top = 4.dp)
+            ) {
+                Text(
+                    "🧩 Automatizador de Tareas permite crear, programar y ejecutar tareas del sistema automáticamente.",
+                    color = NeutralDark,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    "• Usa el botón “+” para crear nuevas tareas y configurar su horario.",
+                    color = NeutralDark,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    "• Mantén pulsada una tarea para abrir su menú y programarla o editarla.",
+                    color = NeutralDark,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    "• El registro de eventos aparece en la parte inferior, dentro del apartado LOGS.",
+                    color = NeutralDark,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    "• Desde el menú lateral (⋮) puedes consultar esta guía, ver la información de la app o salir.",
+                    color = NeutralDark,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+        },
+        containerColor = NeutralLight,
+        tonalElevation = 8.dp,
+        shape = MaterialTheme.shapes.medium
+    )
+}
+
