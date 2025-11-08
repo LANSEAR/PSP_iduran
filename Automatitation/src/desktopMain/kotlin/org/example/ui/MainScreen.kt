@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -45,14 +46,17 @@ fun main() = application {
                 onBackground = NeutralDark
             )
         ) {
-            MainScreen()
+            MainScreen(onExit = ::exitApplication)
         }
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
 @Composable
-fun MainScreen(vm: TaskViewModel = remember { TaskViewModel() }) {
+fun MainScreen(
+    vm: TaskViewModel = remember { TaskViewModel() },
+    onExit: () -> Unit = {}
+) {
 
     // Estados del menú principal
     var expandedPlus by remember { mutableStateOf(false) }
@@ -64,7 +68,7 @@ fun MainScreen(vm: TaskViewModel = remember { TaskViewModel() }) {
     var showEditDialog by remember { mutableStateOf(false) }
     var showSelectDialog by remember { mutableStateOf(false) }
     var showInfoDialog by remember { mutableStateOf(false) }
-    var showGuideDialog by remember { mutableStateOf(false) } // 🔹 nuevo diálogo
+    var showGuideDialog by remember { mutableStateOf(false) }
 
     // Estado para la tarea seleccionada
     var selectedTask by remember { mutableStateOf<TaskViewModel.TaskUi?>(null) }
@@ -152,7 +156,7 @@ fun MainScreen(vm: TaskViewModel = remember { TaskViewModel() }) {
                         text = { Text("SALIR", color = OrangeBright) },
                         onClick = {
                             expandedDots = false
-                            kotlin.system.exitProcess(0)
+                            onExit()
                         }
                     )
                 }
@@ -173,9 +177,9 @@ fun MainScreen(vm: TaskViewModel = remember { TaskViewModel() }) {
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 vm.tasks.forEach { task ->
-                    var expandedTaskMenu by remember { mutableStateOf(false) }
-                    var showIntervalDialog by remember { mutableStateOf(false) }
-                    var showBackupDialog by remember { mutableStateOf(false) }
+                    var expandedTaskMenu by remember(task.id) { mutableStateOf(false) }
+                    var showIntervalDialog by remember(task.id) { mutableStateOf(false) }
+                    var showBackupDialog by remember(task.id) { mutableStateOf(false) }
 
                     Box(
                         modifier = Modifier
@@ -335,7 +339,7 @@ fun MainScreen(vm: TaskViewModel = remember { TaskViewModel() }) {
 
                                 if (expanded && log.details.isNotBlank()) {
                                     Spacer(Modifier.height(6.dp))
-                                    Divider(color = Color(0xFFE0E0E0))
+                                    HorizontalDivider(color = Color(0xFFE0E0E0))
                                     Spacer(Modifier.height(6.dp))
                                     Text(
                                         text = log.details.trim(),
@@ -358,8 +362,11 @@ fun MainScreen(vm: TaskViewModel = remember { TaskViewModel() }) {
     if (showDeleteDialog)
         DialogBorrarTarea(vm, selectedTask, onDismiss = { showDeleteDialog = false })
 
-    if (showEditDialog)
-        DialogEditarTarea(vm, selectedTask, onDismiss = { showEditDialog = false })
+    if (showEditDialog && selectedTask != null)
+        DialogEditarTarea(vm, selectedTask, onDismiss = {
+            showEditDialog = false
+            selectedTask = null
+        })
 
     if (showSelectDialog)
         DialogSeleccionarTarea(
@@ -376,7 +383,7 @@ fun MainScreen(vm: TaskViewModel = remember { TaskViewModel() }) {
         DialogInfoApp(onDismiss = { showInfoDialog = false })
 
     if (showGuideDialog)
-        DialogGuideApp(onDismiss = { showGuideDialog = false }) // 🔹 nuevo
+        DialogGuideApp(onDismiss = { showGuideDialog = false })
 }
 
 @Composable
@@ -405,7 +412,7 @@ fun DialogInfoApp(onDismiss: () -> Unit) {
                 Text("👤 Desarrollado por: Iván Durán", color = Color(0xFF1C1C1C))
                 Text("⚙️ Versión: 1.0.0", color = Color(0xFF1C1C1C))
                 Text("📅 Fecha de lanzamiento: 2 de noviembre de 2025", color = Color(0xFF1C1C1C))
-                Divider(Modifier.padding(vertical = 8.dp))
+                HorizontalDivider(Modifier.padding(vertical = 8.dp))
                 Text(
                     "© 2025 Iván Durán. Todos los derechos reservados.",
                     color = Color.Gray,
@@ -447,7 +454,7 @@ fun DialogGuideApp(onDismiss: () -> Unit) {
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
-                    "• Usa el botón “+” para crear nuevas tareas y configurar su horario.",
+                    "• Usa el botón "+" para crear nuevas tareas y configurar su horario.",
                     color = NeutralDark,
                     style = MaterialTheme.typography.bodyMedium
                 )
@@ -473,4 +480,3 @@ fun DialogGuideApp(onDismiss: () -> Unit) {
         shape = MaterialTheme.shapes.medium
     )
 }
-

@@ -8,7 +8,7 @@
         <option name="gradleJvm" value="#JAVA_HOME" />
         <option name="modules">
           <set>
-            <option value="$PROJECT_DIR$/Automatitation" />
+            <option value="//VBoxSvr/F_DRIVE/2DAM/PSP/Automatizacion/Automatitation" />
           </set>
         </option>
       </GradleProjectSettings>

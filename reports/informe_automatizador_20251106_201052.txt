@@ -1,0 +1,12 @@
+===== INFORME AUTOMÁTICO DEL SISTEMA =====
+📅 Fecha: 06/11/2025 20:10:52
+👤 Usuario: iduran
+💻 Sistema operativo: Windows 10
+☕ Versión de Java: 23.0.1
+-------------------------------------------
+Resumen de entorno de ejecución:
+- Carpeta de trabajo: F:\2DAM\PSP\Automatizacion\.
+- Generado por: Automatizador de Tareas Kotlin
+-------------------------------------------
+Notas:
+Este informe fue generado automáticamente por el sistema de tareas.
