@@ -36,6 +36,16 @@ object CommandFactory {
 
                 listOf("internal_backup", source, dest)
             }
+            TaskActionType.RUN_SCRIPT -> {
+                if (customArg.isNullOrBlank()) return emptyList()
+
+                when (OsDetector.current) {
+                    OsType.WINDOWS -> listOf("cmd.exe", "/c", customArg)
+                    OsType.LINUX, OsType.MAC -> listOf("bash", customArg)
+                    else -> emptyList()
+                }
+            }
+
         }
     }
 }

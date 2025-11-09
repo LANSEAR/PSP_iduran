@@ -6,7 +6,9 @@ enum class TaskActionType {
     CLEAN_TEMP,
     GENERATE_REPORT,
     BACKUP_FOLDER,
+    RUN_SCRIPT
 }
+
 
 data class Task(
     val id: String,

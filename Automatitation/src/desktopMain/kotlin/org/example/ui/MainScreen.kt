@@ -180,7 +180,7 @@ fun MainScreen(
                     var expandedTaskMenu by remember(task.id) { mutableStateOf(false) }
                     var showIntervalDialog by remember(task.id) { mutableStateOf(false) }
                     var showBackupDialog by remember(task.id) { mutableStateOf(false) }
-
+                    var showScriptDialog by remember { mutableStateOf(false) }
                     Box(
                         modifier = Modifier
                             .size(150.dp)
@@ -243,6 +243,15 @@ fun MainScreen(
                                     }
                                 }
                             )
+                            if (task.actionType == TaskActionType.RUN_SCRIPT) {
+                                DropdownMenuItem(
+                                    text = { Text("📜 Ejecutar script externo", color = CyanAccent) },
+                                    onClick = {
+                                        expandedTaskMenu = false
+                                        showScriptDialog = true
+                                    }
+                                )
+                            }
                             DropdownMenuItem(
                                 text = { Text("⏱️ Programar tarea", color = YellowAccent) },
                                 onClick = {
@@ -281,6 +290,9 @@ fun MainScreen(
                         if (showBackupDialog)
                             DialogBackupFolder(vm = vm, task = task, onDismiss = { showBackupDialog = false })
                     }
+                    if (showScriptDialog)
+                        DialogRunScript(vm = vm, task = task, onDismiss = { showScriptDialog = false })
+
                 }
             }
         }
@@ -424,6 +436,55 @@ fun DialogInfoApp(onDismiss: () -> Unit) {
         tonalElevation = 8.dp
     )
 }
+@Composable
+fun DialogRunScript(vm: TaskViewModel, task: TaskViewModel.TaskUi, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cerrar", color = RedPrimary, fontWeight = FontWeight.SemiBold)
+            }
+        },
+        title = {
+            Text(
+                "Seleccionar script a ejecutar",
+                color = RedPrimary,
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold)
+            )
+        },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.padding(top = 4.dp)
+            ) {
+                Text(
+                    "Elige un archivo .bat (Windows) o .sh (Linux/Mac) para ejecutar:",
+                    color = NeutralDark
+                )
+                Button(
+                    onClick = {
+                        val chooser = javax.swing.JFileChooser().apply {
+                            fileSelectionMode = javax.swing.JFileChooser.FILES_ONLY
+                            dialogTitle = "Selecciona un script"
+                        }
+                        val result = chooser.showOpenDialog(null)
+                        if (result == javax.swing.JFileChooser.APPROVE_OPTION) {
+                            val scriptPath = chooser.selectedFile.absolutePath
+                            vm.runTaskNow(task.id, scriptPath)
+                        }
+                        onDismiss()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = CyanAccent)
+                ) {
+                    Text("Seleccionar script", color = Color.White)
+                }
+            }
+        },
+        containerColor = NeutralLight,
+        tonalElevation = 8.dp
+    )
+}
+
 
 @Composable
 fun DialogGuideApp(onDismiss: () -> Unit) {

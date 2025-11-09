@@ -85,6 +85,15 @@ Usuario → UI (MainScreen)
     - **Salir:** cierra la aplicación.
 5. Los resultados se muestran en el panel **LOGS** (éxitos, errores o avisos).
 
+## Scripts Personalizados
+Quizás la función mas poderosa del programa. Aparte de las tareas ya puestas, se pueden cargar tareas mediante ficheros ".bat" o ".sh"
+
+1. Pulsa **“+”** para abrir el menú principal.
+2. Selecciona la función "Script Personalizado"
+3. Al pulsar sobre la tarea dará la opción de cargar un script.
+4. Al cargar el fichero se podrá ejecutar y configurar como cualquiera otra tarea.
+
+
 ---
 
 ## 💾 Ejemplo de tareas
