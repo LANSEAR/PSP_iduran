@@ -5,10 +5,11 @@
     <option name="linkedExternalProjectsSettings">
       <GradleProjectSettings>
         <option name="externalProjectPath" value="$PROJECT_DIR$/Automatitation" />
-        <option name="gradleJvm" value="#JAVA_HOME" />
+        <option name="gradleHome" value="C:\gradle-9.2.0" />
+        <option name="gradleJvm" value="24" />
         <option name="modules">
           <set>
-            <option value="//VBoxSvr/F_DRIVE/2DAM/PSP/Automatizacion/Automatitation" />
+            <option value="$PROJECT_DIR$/Automatitation" />
           </set>
         </option>
       </GradleProjectSettings>

@@ -51,7 +51,7 @@ kotlin {
 
 compose.desktop {
     application {
-        mainClass = "org.example.ui.MainScreenKt" // Ajusta a tu paquete real
+        mainClass = "org.example.ui.MainScreenKt"  // Ajusta si tu clase principal tiene otro nombre
         nativeDistributions {
             targetFormats(
                 org.jetbrains.compose.desktop.application.dsl.TargetFormat.Dmg,
@@ -60,6 +60,9 @@ compose.desktop {
             )
             packageName = "TaskAutomationApp"
             packageVersion = "1.0.0"
+
+
         }
     }
 }
+

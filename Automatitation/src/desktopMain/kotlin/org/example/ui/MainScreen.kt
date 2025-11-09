@@ -454,7 +454,7 @@ fun DialogGuideApp(onDismiss: () -> Unit) {
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
-                    "• Usa el botón "+" para crear nuevas tareas y configurar su horario.",
+                    "• Usa el botón + para crear nuevas tareas y configurar su horario.",
                     color = NeutralDark,
                     style = MaterialTheme.typography.bodyMedium
                 )
