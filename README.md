@@ -1,8 +1,9 @@
 # 🧠 Automatizador de Tareas — Kotlin & Jetpack Compose Desktop
 
 
-## 🚀 Ejecución del proyecto
+## 🚀✨ **EJECUCIÓN DEL PROYECTO (¡LO MÁS IMPORTANTE!)**
 
+> 🔥 **Empieza por aquí**: esta es la forma más rápida y segura de ejecutar el programa.
 Para ejecutar **Automatizador de Tareas**, asegúrate de seguir los pasos según el entorno:
 
 ### ▶️ Desde IntelliJ IDEA
@@ -16,6 +17,20 @@ Para ejecutar **Automatizador de Tareas**, asegúrate de seguir los pasos según
 5. Haz clic en el botón ▶️ Run que aparece a la izquierda del nombre de la función.
 6. La aplicación Automatizador de Tareas se iniciará y mostrará su ventana principal.
 
+### 💾 **Usando los instaladores**
+
+En el repositorio encontrarás la carpeta **`Instaladores/`**, que contiene los ejecutables listos para cada sistema operativo:
+
+| Carpeta | Sistema operativo | Tipo de instalador |
+|----------|-------------------|--------------------|
+| `Windows/` | 🪟 Windows | `.msi` (asistente de instalación) |
+| `Linux/` | 🐧 Linux / 🍎 macOS | `.deb` (instalable desde terminal o con doble clic) |
+
+> 💡 **Nota:** para instalar el paquete `.deb` en Linux o macOS, abre una terminal en la carpeta donde se encuentra el archivo y ejecuta:
+> ```bash
+> sudo dpkg -i TaskAutomationApp_1.0.0_amd64.deb
+> ```
+> Esto descomprimirá e instalará automáticamente la aplicación en el sistema.
 
 
 ### 📘 Descripción general
@@ -111,4 +126,4 @@ Durante el desarrollo se empleó **ChatGPT (modelo GPT-5 de OpenAI)** como herra
 ---
 
 ## 🔗 Enlace al repositorio
-👉 [GitHub – Automatizador de Tareas](https://github.com/usuario/AutomatizadorTareas)  
+👉 [GitHub – Automatizador de Tareas](https://github.com/LANSEAR/PSP_iduran.git)  
