@@ -21,16 +21,16 @@ Para ejecutar **Automatizador de Tareas**, asegúrate de seguir los pasos según
 
 En el repositorio encontrarás la carpeta **`Instaladores/`**, que contiene los ejecutables listos para cada sistema operativo:
 
-| Carpeta | Sistema operativo | Tipo de instalador |
-|----------|-------------------|--------------------|
-| `Windows/` | 🪟 Windows | `.msi` (asistente de instalación) |
-| `Linux/` | 🐧 Linux / 🍎 macOS | `.deb` (instalable desde terminal o con doble clic) |
+| Carpeta | Sistema operativo | Tipo de instalador                                              |
+|----------|-------------------|-----------------------------------------------------------------|
+| `Windows/` | 🪟 Windows | `.msi` (asistente de instalación)                               |
+| `Linux/` | 🐧 Linux / 🍎 macOS | `ejecutable LINUX` (instalable desde terminal) |
 
-> 💡 **Nota:** para instalar el paquete `.deb` en Linux o macOS, abre una terminal en la carpeta donde se encuentra el archivo y ejecuta:
+> 💡 **Nota:** para instalar el paquete  en Linux o macOS, abre una terminal en la carpeta "TaskAutomationApp/bin" después de descomprimir el ".zip" de /Instaladores/LInux y ejecuta:
 > ```bash
-> sudo dpkg -i TaskAutomationApp_1.0.0_amd64.deb
+> sudo ./TaskAutomationApp
 > ```
-> Esto descomprimirá e instalará automáticamente la aplicación en el sistema.
+> Este comando permitirá ejecutar el proyecto en su equipo 
 
 
 ### 📘 Descripción general
